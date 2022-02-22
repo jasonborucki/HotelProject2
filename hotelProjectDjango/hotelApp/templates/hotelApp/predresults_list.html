@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+    <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <title>Hotel Cancellations Prediction</title>
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="/">Prediction <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/results">Dashboard</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+        {% if request.user.is_authenticated %}
+            <p>{{request.user}}</p>
+            <a href="{% url 'hotelApp:logout' %}"><p>Logout</p></a>
+            {%  else %}
+            <a href="{% url 'hotelApp:login' %}">Login</a>
+            {% endif %}
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Prediction Results</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5>Prediction Input:</h5>
+                <div>adults: <span id="aa1"></span></div>
+                <div>repeated_guest: <span id="aa2"></span></div>
+                <div>hotel_type: <span id="aa3"></span></div>
+                <div>direct_binary: <span id="aa4"></span></div>
+                <div>children: <span id="aa5"></span></div>
+                <div>babies: <span id="aa6"></span></div>
+                <div>cancellations_binary: <span id="aa7"></span></div>
+                <div>uncanceled_binary: <span id="aa8"></span></div>
+                <div>booking_changes: <span id="aa9"></span></div>
+                <div>waiting_list: <span id="aa10"></span></div>
+                <div>required_parking: <span id="aa11"></span></div>
+                <div>special_requests: <span id="aa12"></span></div>
+                <div>average_rate: <span id="aa13"></span></div>
+                <div>lead_time: <span id="aa14"></span></div>
+                <h5 class="pt-3">Prediction Classification:</h5>
+                <div id="prediction"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container pt-5">
+    <div class="row justify-content-md-center">
+        <div class="col-md-4">
+            <h1>Hotel Cancellation Prediction</h1>
+            <form action="" id="post-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="adults">Adults</label>
+                    <input type="number" step="1" class="form-control" id="adults" placeholder="Number of Adults" required>
+                </div>
+                <div class="form-group">
+                    <label for="repeated_guest">Are you a repeat guest?</label>
+                    <input type="text" class="form-control" id="repeated_guest" placeholder="0 for No - 1 for Yes" required>
+                </div>
+                <div class="form-group">
+                    <label for="hotel_type">Are you booking a city hotel or a resort?</label>
+                    <input type="text" class="form-control" id="hotel_type" placeholder="0 for City - 1 for Resort" required>
+                </div>
+                <div class="form-group">
+                    <label for="direct_binary">Will you book this reservation directly on the hotel site?</label>
+                    <input type="text" class="form-control" id="direct_binary" placeholder="0 for No - 1 for Yes" required>
+                </div>
+                <div class="form-group">
+                    <label for="children">Will you have children with you?</label>
+                    <input type="text" class="form-control" id="children" placeholder="0 for No - 1 for Yes" required>
+                </div>
+                <div class="form-group">
+                    <label for="babies">Will you have babies with you</label>
+                    <input type="text" class="form-control" id="babies" placeholder="0 for No - 1 for Yes" required>
+                </div>
+                <div class="form-group">
+                    <label for="cancellations_binary">Have you made prior cancellations here before?</label>
+                    <input type="text" class="form-control" id="cancellations_binary" placeholder="0 for No - 1 for Yes" required>
+                </div>
+                <div class="form-group">
+                    <label for="uncanceled_binary">Have you made uncanceled reservations here?</label>
+                    <input type="text" class="form-control" id="uncanceled_binary" placeholder="0 for No - 1 for Yes" required>
+                </div>
+                <div class="form-group">
+                    <label for="booking_changes">Will you predict any booking changes?</label>
+                    <input type="text" class="form-control" id="booking_changes" placeholder="0 for No - 1 for Yes" required>
+                </div>
+                <div class="form-group">
+                <label for="waiting_list">Are you on a waiting list for this hotel?</label>
+                    <input type="text" class="form-control" id="waiting_list" placeholder="0 for No - 1 for Yes" required>
+                </div>
+                <div class="form-group">
+                    <label for="required_parking">Required Parking Spots</label>
+                    <input type="number" step="1" class="form-control" id="required_parking" placeholder="No more than 5" required>
+                </div>
+                <div class="form-group">
+                    <label for="special_requests">Will you have special requests?</label>
+                    <input type="text" step="1" class="form-control" id="special_requests" placeholder="0 for No 1 - 1 for Yes" required>
+                </div>
+                <div class="form-group">
+                    <label for="average_rate">Average Daily Rate of Hotel. 0 for under $100. 1 for under $200. 2 for under $300. 3 for under $400. 4 for under $500. 5 for $501+</label>
+                    <input type="number" step="1" class="form-control" id="average_rate" placeholder="Pick the closest number" required>
+                </div>
+                <div class="form-group">
+                <label for="lead_time">How far away is your vacation? 0 for under 100 days. 1 for under 200. 2 for under 300. 3 for under 400. 4 for under 500. 5 for 501+</label>
+                    <input type="number" step="1" class="form-control" id="lead_time" placeholder="Number of days" required>
+                </div>
+
+
+
+                <button type="submit" value="Submit" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Submit</button>
+            </form>
+            <div class="form-group" align="center">
+                <label for="lead_time">Result</label>
+                <input type="text" class="form-control" id="result" placeholder="Result" required>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <script>
+    $(document).on('submit', '#post-form',function(e){
+        e.preventDefault();
+        $.ajax({
+            type:'POST',
+            url:'{% url "hotelApp:submit_prediction" %}',
+            data:{
+                adults:$('#adults').val(),
+                repeated_guest:$('#repeated_guest').val(),
+                hotel_type:$('#hotel_type').val(),
+                direct_binary:$('#direct_binary').val(),
+                children:$('#children').val(),
+                babies:$('#babies').val(),
+                cancellations_binary:$('#cancellations_binary').val(),
+                uncanceled_binary:$('#uncanceled_binary').val(),
+                booking_changes:$('#booking_changes').val(),
+                waiting_list:$('#waiting_list').val(),
+                required_parking:$('#required_parking').val(),
+                special_requests:$('#special_requests').val(),
+                average_rate:$('#average_rate').val(),
+                lead_time:$('#lead_time').val(),
+                csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(),
+                action: 'post'
+            },
+            success:function(json) {
+                document.forms["post-form"].reset();
+                if (json['result'] == 0.0){
+                    document.getElementById("result").value = "Not Cancelled"
+                }else{
+                    document.getElementById("result").value = "Cancelled"
+                }
+                document.getElementById("prediction").innerHTML = json['result']
+                document.getElementById("aa1").innerHTML = json['adults']
+                document.getElementById("aa2").innerHTML = json['repeated_guest']
+                document.getElementById("aa3").innerHTML = json['hotel_type']
+                document.getElementById("aa4").innerHTML = json['direct_binary']
+                document.getElementById("aa5").innerHTML = json['children']
+                document.getElementById("aa6").innerHTML = json['babies']
+                document.getElementById("aa7").innerHTML = json['cancellations_binary']
+                document.getElementById("aa8").innerHTML = json['uncanceled_binary']
+                document.getElementById("aa9").innerHTML = json['booking_changes']
+                document.getElementById("aa10").innerHTML = json['waiting_list']
+                document.getElementById("aa11").innerHTML = json['required_parking']
+                document.getElementById("aa12").innerHTML = json['special_requests']
+                document.getElementById("aa13").innerHTML = json['average_rate']
+                document.getElementById("aa14").innerHTML = json['lead_time']
+            },
+            error : function(xhr,errmsg,err) {
+
+            }
+        });
+    })
+</script>
+
+
